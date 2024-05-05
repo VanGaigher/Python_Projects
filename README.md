@@ -24,6 +24,41 @@ The repository contains two files. One in xlsx format, divided into three sheets
 
 ### Query 01 - General Analysis
 To create the first chart, Common Table Expressions (CTEs) were employed to calculate the number of leads, sales, total revenue, conversion rate, and average ticket, grouped by month. The CTEs were joined using the month as the joining key.
+``` sql
+WITH
+	leads AS(
+		SELECT
+			DATE_TRUNC('month', visit_page_date )::date AS visit_page_month,
+			COUNT(*) AS visit_page_count
+		FROM sales.funnel
+		GROUP BY visit_page_month
+		ORDER BY visit_page_month
+	),
+ 
+	payments AS (
+		SELECT
+			DATE_TRUNC('month', f.paid_date)::date AS paid_month,
+			count(f.paid_date) AS paid_count,
+			SUM(p.price *(1 +f.discount)) AS receita
+		FROM sales.funnel AS f
+		LEFT JOIN sales.products AS p
+		ON f.product_id = p.product_id
+		WHERE f.paid_date IS NOT null
+		GROUP BY paid_month
+		ORDER BY paid_month
+	)
+
+SELECT
+	leads.visit_page_month AS "mês",
+	leads.visit_page_count AS "leads(#)",
+	payments.paid_count AS "vendas (#)",
+	(payments.receita/1000) AS "receita (k, R$)",
+	(payments.paid_count:: float/leads.visit_page_count::float) AS "conversão (%)",
+	(payments.receita/payments.paid_count/1000) AS "ticket médio (k, R$)"
+FROM leads
+LEFT JOIN payments
+ON leads.visit_page_month = payments.paid_month
+```
 
 ### Query 02 - Sales by State
 Fixing the country as 'Brazil,' a count of the number of sales per state during August 2021 was conducted. A LEFT JOIN between the sales and customers tables was utilized.

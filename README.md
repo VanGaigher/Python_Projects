@@ -63,14 +63,70 @@ ON leads.visit_page_month = payments.paid_month
 ### Query 02 - Sales by State
 Fixing the country as 'Brazil,' a count of the number of sales per state during August 2021 was conducted. A LEFT JOIN between the sales and customers tables was utilized.
 
+``` sql
+SELECT
+	'Brazil' AS país,
+	c.state AS estado,
+	COUNT(f.paid_date) AS "vendas (#)"
+
+FROM sales.funnel AS f
+LEFT JOIN sales.customers AS c
+	ON f.customer_id = c.customer_id
+WHERE paid_date BETWEEN '2021-08-01' AND '2021-08-31'
+GROUP BY país, estado
+ORDER BY "vendas (#)" DESC
+LIMIT 5
+```
+
 ### Query 03 - Brand Analysis
 Product sales were analyzed by counting the number of sales per brand, presenting the top five brands with the highest sales.
+
+```sql
+SELECT
+	p.brand AS marca,
+	COUNT(f.paid_date) AS "vendas (#)"
+FROM sales.funnel AS f
+LEFT JOIN sales.products AS p
+	ON f.product_id = p.product_id
+GROUP BY marca
+ORDER BY "vendas (#)" DESC
+LIMIT 5
+```
 
 ### Query 04 - Sales by Store
 Focused on analyzing sales by store, the number of sales per store was counted, and the top five stores with the highest sales were presented.
 
+```sql
+SELECT
+	s.store_name AS loja,
+	COUNT(f.paid_date) AS "vendas (#)"
+FROM sales.funnel AS f
+LEFT JOIN sales.stores AS s
+	ON f.store_id = s.store_id
+GROUP BY loja
+ORDER BY "vendas (#)" DESC
+LIMIT 5
+```
+
 ### Query 05 - Website Visits by Day of the Week
 This query groups the number of website visits by the day of the week, providing insights into traffic patterns throughout the week.
+```sql
+SELECT
+    EXTRACT('dow' FROM visit_page_date) AS dias_semana,
+	CASE
+		WHEN EXTRACT('dow' FROM visit_page_date) = 0 THEN 'domingo'
+		WHEN EXTRACT('dow'FROM visit_page_date) = 1 THEN 'segunda'
+		WHEN EXTRACT('dow' FROM visit_page_date) = 2 THEN 'terça'
+		WHEN EXTRACT('dow' FROM visit_page_date) = 3 THEN 'quarta'
+		WHEN EXTRACT('dow' FROM visit_page_date) = 4 THEN 'quinta'
+		WHEN EXTRACT('dow' FROM visit_page_date) = 5 THEN 'sexta'
+		WHEN EXTRACT('dow'FROM visit_page_date) = 6 THEN 'sábado'
+	ELSE null END AS dias_semana_result,
+  COUNT(*) AS num_visitas
+FROM sales.funnel
+GROUP BY dias_semana
+ORDER BY num_visitas
+```
 
 ## Contributions
 Contributions are welcome! Suggestions, corrections, or improvements can be shared through issues or pull requests.
